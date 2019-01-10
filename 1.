@@ -1,0 +1,226 @@
+//
+//  main.cpp
+//  SpaceINV
+//
+//  Created by Tobiasz Witalis on 04/01/2019.
+//  Copyright © 2019 Tobiasz Witalis. All rights reserved.
+//
+
+#include <iostream>
+#include <cstdlib>
+#include <ncurses.h>
+#include <unistd.h>
+
+using namespace std;
+
+bool gameover;
+bool strzal;
+const int szerokosc=30;
+const int wysokosc=30;
+int ppx, ppy, score, enemyX, enemyY, strzalX, strzalY, life, enemies;
+enum eDirection {STOP=0, LEFT, RIGHT, UP, DOWN,};
+eDirection dir;
+
+void setup()
+{
+    initscr();
+    clear();
+    noecho();
+    cbreak();
+    curs_set(0);
+    
+    life = 3;
+    gameover=false;
+    dir =  STOP;
+    ppx=szerokosc/2;
+    ppy=wysokosc-2;
+    enemyX = szerokosc/2;
+    enemyY = 1;
+    strzalX = ppx;
+    strzalY = ppy-1;
+    score = 0;
+}
+
+
+void draw()
+{
+    int zmiennaWysokości = 0;
+    move(zmiennaWysokości,0);
+    
+    
+    for (int x=0; x<szerokosc; x++)
+    {
+        if (x==0)
+            addch(' '|A_ALTCHARSET | 108);
+        else if (x==szerokosc-1)
+            addch(' '|A_ALTCHARSET | 107);
+        else
+            printw("-");
+    }
+    
+    zmiennaWysokości++;
+    move(zmiennaWysokości,0);
+    for (int k=0; k<wysokosc; k++)
+    {
+        for (int x=0; x<szerokosc;x++)
+        {
+            if (x==0 || x==szerokosc-1)
+                printw("|");
+            else if ((x == strzalX) && (k==strzalY) && strzal == true)
+            {
+                strzalX = x;
+                printw("!");   //proba koloru
+                strzalY--;
+            }
+            else if (x==ppx && k==ppy)
+                addch(' '|A_ALTCHARSET | 97);
+                //printw("H");
+            else if (x==enemyX && k==enemyY)
+                addch(' '|A_ALTCHARSET | 96);
+                //printw("@");
+            else
+                printw(" ");
+        }
+        zmiennaWysokości++;
+        move(zmiennaWysokości,0);
+    }
+    
+    for (int x=0; x<szerokosc; x++)
+    {
+        if (x==0)
+            addch(' '|A_ALTCHARSET | 109);
+        else if (x==szerokosc-1)
+            addch(' '|A_ALTCHARSET | 106);
+        else
+            printw("-");
+    }
+    
+    zmiennaWysokości++;
+    move(zmiennaWysokości,0);
+    
+    enemyY++;
+    //strzal=false;
+}
+
+
+
+void input()
+{
+    keypad(stdscr, true);
+    halfdelay(1);
+    
+    int c = getch();
+    
+    switch(c)
+    {
+        case KEY_LEFT:
+            dir = LEFT;
+            break;
+        case KEY_RIGHT:
+            dir = RIGHT;
+            break;
+        case KEY_DOWN:
+            dir = DOWN;
+            break;
+        case KEY_UP:
+            dir = UP;
+            break;
+        case 's':
+            strzal = true;
+            break;
+        case 'q':    //   "q" - QUIT
+            life = 0;
+            break;
+    }
+}
+
+void logic()
+{
+    switch (dir)
+    {
+        case LEFT:
+            ppx--;
+            strzalX--;
+            dir = STOP;   // DODANIE STOP
+            break;
+        case RIGHT:
+            ppx++;
+            strzalX++;
+            dir = STOP;
+            break;
+        case DOWN:
+            ppy++;
+            strzalY++;
+            dir = STOP;
+            break;
+        case UP:
+            ppy--;
+            strzalY--;
+            dir = STOP;
+            break;
+        default:
+            break;
+    }
+    
+    if (ppx > szerokosc || ppx < 0 || ppy > wysokosc || ppy < 0)
+        gameover = true;
+    
+    if (ppx == enemyX && ppy == enemyY)
+    {
+        score = score - 150;
+        enemyX = rand() % szerokosc;
+        enemyY = 1;
+        life--;
+    }
+    
+    if (enemyY == wysokosc)
+    {
+        score = score - 50;
+        //gameover = true;
+        enemyX = rand() % szerokosc;
+        enemyY = 1;
+    }
+    
+    if (strzalX == enemyX && strzalY == enemyY)
+    {
+        score = score + 200;
+        enemyX = rand() % szerokosc;
+        enemyY = 1;
+        strzalX = ppx;   //proba zmiany pocisku pozesztezlemiu aliena
+        strzalY = ppy;
+        enemies++;
+        strzal = false;
+    }
+    
+    if (ppx == szerokosc-2 || ppy == wysokosc-1 || ppx == 1 || ppy == 0)
+    {
+        gameover = false;
+        dir = STOP;
+    }
+    
+    if (strzalY == 1)
+    {
+        strzalX = ppx;   //proba zmiany pocisku pozesztezlemiu aliena
+        strzalY = ppy;
+        strzal = false;
+    }
+    
+}
+
+int main()
+{
+    setup();
+
+    while (life>0)
+    {
+        printw("SCORE: %d | ", score);
+        printw("LIFES LESFT: %d | ", life);
+        printw("ENEMIES SHOT: %d ", enemies);
+        draw();
+        input();
+        logic();
+    }
+    getch();
+    endwin();
+    return 0;
+}
