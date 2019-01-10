@@ -1,0 +1,272 @@
+//
+//  main.cpp
+//  SpaceINV
+//
+//  Created by Tobiasz Witalis on 04/01/2019.
+//  Copyright © 2019 Tobiasz Witalis. All rights reserved.
+//
+
+#include <iostream>
+#include <cstdlib>
+#include <ncurses.h>
+#include <unistd.h>
+#include <fstream>
+
+using namespace std;
+
+
+bool strzal;
+bool strzal2;
+const int szerokosc=30;
+const int wysokosc=30;
+int ppx, ppy, score, enemyX, enemyY, strzalX, strzalY, life, enemies, strzal2X, strzal2Y, s2x, sx;
+enum eDirection {STOP=0, LEFT, RIGHT, UP, DOWN,};
+eDirection dir;
+
+void setup()
+{
+    initscr();
+    clear();
+    noecho();
+    cbreak();
+    curs_set(0);
+    
+    life = 5;
+    strzal = false;
+    strzal2 = false;
+    dir =  STOP;
+    ppx=szerokosc/2;
+    ppy=wysokosc-2;
+    enemyX = szerokosc/2;
+    enemyY = 1;
+    strzalX = ppx;
+    strzalY = ppy-1;
+    strzal2X = ppx;
+    strzal2Y = ppy-1;
+    score = 0;
+}
+
+
+void draw()
+{
+    int zmiennaWysokości = 0;
+    move(zmiennaWysokości,0);
+    
+    
+    for (int x=0; x<szerokosc; x++)
+    {
+        if (x==0)
+            addch(' '|A_ALTCHARSET | 108);
+        else if (x==szerokosc-1)
+            addch(' '|A_ALTCHARSET | 107);
+        else
+            printw("-");
+    }
+    
+    
+    
+    zmiennaWysokości++;
+    move(zmiennaWysokości,0);
+    for (int k=0; k<wysokosc; k++)
+    {
+        for (int x=0; x<szerokosc;x++)
+        {
+            if (x==0 || x==szerokosc-1)
+                printw("|");
+            else if ((x == strzalX) && (k==strzalY) && strzal == true)
+            {
+                //strzalX = x;  //pozniej dodac wskaznik na tablice wktorej zapisywana bedzi wartosc x
+                printw("!");
+                strzalY--;
+            }
+            else if ((x == strzal2X) && (k==strzal2Y) && strzal2 == true)
+            {
+                //strzal2X = x;
+                printw("!");
+                strzal2Y--;
+            }
+            else if (x==ppx && k==ppy)
+                addch(' '|A_ALTCHARSET | 97);
+                //printw("H");
+            else if (x==enemyX && k==enemyY)
+                addch(' '|A_ALTCHARSET | 96);
+                //printw("@");
+            else
+                printw(" ");
+        }
+        zmiennaWysokości++;
+        move(zmiennaWysokości,0);
+    }
+    
+    for (int x=0; x<szerokosc; x++)
+    {
+        if (x==0)
+            addch(' '|A_ALTCHARSET | 109);
+        else if (x==szerokosc-1)
+            addch(' '|A_ALTCHARSET | 106);
+        else
+            printw("-");
+    }
+    
+    zmiennaWysokości++;
+    move(zmiennaWysokości,0);
+    
+    enemyY++;
+    strzalX = ppx;
+    strzal2X = ppx;
+}
+
+
+
+void input()
+{
+    keypad(stdscr, true);
+    halfdelay(1);
+    
+    int c = getch();
+    
+    switch(c)
+    {
+        case KEY_LEFT:
+            dir = LEFT;
+            break;
+        case KEY_RIGHT:
+            dir = RIGHT;
+            break;
+        case KEY_DOWN:
+            dir = DOWN;
+            break;
+        case KEY_UP:
+            dir = UP;
+            break;
+        case 's':
+            if(strzal==true)
+            {
+                strzal2 = true;
+                s2x = ppx;
+            }
+            else
+            {
+                strzal = true;
+                sx = ppx;
+            }
+            break;
+        case 'q':    //   "q" - QUIT
+            life = 0;
+            break;
+    }
+}
+
+void logic()
+{
+    switch (dir)
+    {
+        case LEFT:
+            ppx--;
+            strzalX--;
+            strzal2X--;
+            dir = STOP;   // DODANIE STOP
+            break;
+        case RIGHT:
+            ppx++;
+            strzalX++;
+            strzal2X++;
+            dir = STOP;
+            break;
+        case DOWN:
+            ppy++;
+            strzalY++;
+            strzal2Y++;
+            dir = STOP;
+            break;
+        case UP:
+            ppy--;
+            strzalY--;
+            strzal2Y--;
+            dir = STOP;
+            break;
+        default:
+            break;
+    }
+    
+    if (ppx == enemyX && ppy == enemyY)
+    {
+        score = score - 150;
+        life--;
+        enemyX = rand() % szerokosc;
+        enemyY = 1;
+    }
+    
+    if (enemyY == wysokosc)
+    {
+        score = score - 50;
+        life--;
+        enemyX = rand() % szerokosc;
+        enemyY = 1;
+    }
+    
+    //KOLIZJA PIERWSZEGO NABOJU Z WROGIEM
+    if ((strzalX == enemyX && strzalY == enemyY) || (strzalX == enemyX && strzalY == enemyY-1))
+    {
+        score = score + 200;            //PUNKTY
+        enemyX = rand() % szerokosc;    //SPAWN WROGA W NOWYM MIEJSCU
+        enemyY = 1;
+        enemies++;
+        strzal = false;
+    }
+    
+    //KOLIZJA DRUGIEGO NABOJU Z WROGIEM
+    if ((strzal2X == enemyX && strzal2Y == enemyY) || (strzal2X == enemyX && strzal2Y == enemyY-1))
+    {
+        score = score + 200;
+        enemyX = rand() % szerokosc;
+        enemyY = 1;
+        enemies++;
+        strzal2 = false;
+    }
+    
+    if (ppx == szerokosc-2 || ppy == wysokosc-1 || ppx == 1 || ppy == 0)
+    {
+        dir = STOP;
+    }
+    
+    if (strzalY == 1)
+    {
+        strzalX = ppx;
+        strzalY = ppy;
+        strzal = false;
+    }
+    
+    if (strzal2Y == 1)
+    {
+        strzal2X = ppx;
+        strzal2Y = ppy;
+        strzal2 = false;
+    }
+    
+    
+}
+
+int main()
+{
+    setup();
+
+    while (life>0)
+    {
+        printw("SCORE: %d | ", score);
+        printw("LIFES LEFT: %d | ", life);
+        printw("ENEMIES SHOT: %d ", enemies);
+        draw();
+        input();
+        logic();
+      
+    }
+    getch();
+    endwin();
+    
+    ofstream plik;
+    plik.open("SCORES.txt");
+    plik<<score;
+    plik.close();
+    return 0;
+}
