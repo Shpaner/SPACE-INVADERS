@@ -21,11 +21,10 @@ bool strzal3;
 bool Bonus;
 bool Bonus2;
 bool Granat;
-bool Granat2;
 bool timeBONUS;
 const int szerokosc=30;
 const int wysokosc=30;
-int ppx, ppy, score, enemyX, enemyY, strzalX, strzalY, life, enemies, strzal2X, strzal2Y, strzal3X, strzal3Y, s2x, sx, n, bonusX, bonusY, czas, granatX, granatY, granat2Y, granat2X, bonus2X, bonus2Y, timeBONUSX, timeBONUSY, BONUSczasowy1;
+int ppx, ppy, score, enemyX, enemyY, strzalX, strzalY, life, enemies, strzal2X, strzal2Y, strzal3X, strzal3Y, s2x, sx, n, bonusX, bonusY, czas, bonus2X, bonus2Y, timeBONUSX, timeBONUSY, BONUSczasowy1, grenades;
 enum eDirection {STOP=0, LEFT, RIGHT, UP, DOWN};
 eDirection dir;
 
@@ -40,13 +39,13 @@ void setup()
     life = 5;
     czas = 0;
     BONUSczasowy1 = 5000;
+    grenades = 0;
     strzal = false;
     strzal2 = false;
     strzal3 = false;
     Bonus = true;
     Bonus2 = false;
     Granat = false;
-    Granat2 = false;
     timeBONUS = false;
     dir =  STOP;
     ppx  = szerokosc/2;
@@ -63,10 +62,6 @@ void setup()
     bonusY = rand() % wysokosc;
     bonus2X = rand() % szerokosc;
     bonus2Y = rand() % wysokosc;
-    granatX = rand() % szerokosc;
-    granatY = rand() % wysokosc;
-    granat2X = rand() % szerokosc;
-    granat2Y = rand() % wysokosc;
     timeBONUSX = (szerokosc/2)-10;
     timeBONUSY = (wysokosc/2)-5;
     score = 0;
@@ -170,23 +165,18 @@ void draw()
                 strzal2Y--;
                 color(0);
             }
-            /*else if ((x == strzal3X) && (k==strzal3Y) && strzal3 == true)
-            {
-                printw("!");
-                strzal3Y--;
-            }*/
-            else if (x==ppx && k==ppy)
-            {
-                color(6);
-                //addch(' '|A_ALTCHARSET | 97);
-                printw("H");
-                color(0);
-            }
             else if (x==enemyX && k==enemyY)
             {
                 color(4);
                 addch(' '|A_ALTCHARSET | 96);
                 //printw("@");
+                color(0);
+            }
+            else if (x==ppx && k==ppy)
+            {
+                color(6);
+                //addch(' '|A_ALTCHARSET | 97);
+                printw("H");
                 color(0);
             }
             else if (life==1 && x==bonusX && k==bonusY && Bonus==true)
@@ -201,21 +191,6 @@ void draw()
                 addch(' '|A_ALTCHARSET | 97);
                 color(0);
             }
-            
-            else if ((czas > 55 && czas < 100) && x==granatX && k==granatY && Granat==true)
-            {
-                color(4);
-                printw("G");
-                color(0);
-            }
-            else if ((czas > 100) && x==granat2X && k==granat2Y && Granat2==true)
-            {
-                color(4);
-                printw("G");
-                color(0);
-            }
-            /*else if (x==timeBONUSX && k==timeBONUSY && timeBONUS==true)
-                printw("TIME BONUS");*/
             else
                 printw(" ");
         }
@@ -274,8 +249,6 @@ void input()
                 strzal2 = true;
                 s2x = ppx;
             }
-            /*else if (strzal == true && strzal2 == true)
-                strzal3 = true;*/
             else
             {
                 strzal = true;
@@ -283,9 +256,6 @@ void input()
             }
             break;
         case 'g':
-            if (Granat == true)
-                Granat2 = true;
-            else
             Granat = true;
             break;
         case 'q':    //   "q" - QUIT
@@ -309,21 +279,18 @@ void logic()
             ppx++;
             strzalX++;
             strzal2X++;
-           // strzal3X++;
             dir = STOP;
             break;
         case DOWN:
             ppy++;
             strzalY++;
             strzal2Y++;
-           // strzal3Y++;
             dir = STOP;
             break;
         case UP:
             ppy--;
             strzalY--;
             strzal2Y--;
-            //strzal3Y--;
             dir = STOP;
             break;
         default:
@@ -347,7 +314,7 @@ void logic()
     }
     
     //KOLIZJA PIERWSZEGO NABOJU Z WROGIEM
-    if ((strzalX == enemyX && strzalY == enemyY) || (strzalX == enemyX && strzalY == enemyY+1))
+    if ((strzalX == enemyX && strzalY == enemyY) || (strzalX == enemyX && strzalY == enemyY+1) || (strzalX == enemyX && strzalY == enemyY-1))
     {
         score = score + 200;            //PUNKTY
         enemyX = rand() % szerokosc;    //SPAWN WROGA W NOWYM MIEJSCU
@@ -357,7 +324,7 @@ void logic()
     }
     
     //KOLIZJA DRUGIEGO NABOJU Z WROGIEM
-    if ((strzal2X == enemyX && strzal2Y == enemyY) || (strzal2X == enemyX && strzal2Y == enemyY+1))
+    if ((strzal2X == enemyX && strzal2Y == enemyY) || (strzal2X == enemyX && strzal2Y == enemyY+1) || (strzal2X == enemyX && strzal2Y == enemyY-1))
     {
         score = score + 200;
         enemyX = rand() % szerokosc;
@@ -366,14 +333,6 @@ void logic()
         strzal2 = false;
     }
     
-  /*  if ((strzal3X == enemyX && strzal3Y == enemyY) || (strzal3X == enemyX && strzal3Y == enemyY-1))
-    {
-        score = score + 200;
-        enemyX = rand() % szerokosc;
-        enemyY = 1;
-        enemies++;
-        strzal3 = false;
-    }*/
     
     if (ppx == szerokosc-2 || ppy == wysokosc-1 || ppx == 1 || ppy == 0)
     {
@@ -411,35 +370,29 @@ void logic()
         Bonus2 = false;
     }
     
-    if (ppx == granatX && ppy == granatY && Granat == true)
+    if (czas > 450)
+        timeBONUS = true;
+    
+    if (Granat == true)
     {
-        score = score + 200;
+        score = score + 500;
         enemyX = rand() % szerokosc;
         enemyY = 1;
         enemies++;
+        grenades--;
         Granat = false;
     }
     
-    if (ppx == granat2X && ppy == granat2Y && Granat2 == true)
-    {
-        score = score + 200;
-        enemyX = rand() % szerokosc;
-        enemyY = 1;
-        enemies++;
-        Granat2 = false;
-    }
     
-    /*if (czas > 40 && czas < 50)
-    {
-        timeBONUS = true;
-        score = score + 5999;
-    }
+    if (enemies == 8)
+        grenades =  1;
     
-    if (czas > 50)
-        timeBONUS = false;*/
-    if (czas > 450)
-        timeBONUS = true;
-        
+    if (enemies == 15)
+        grenades = 2;
+    
+    if (enemies == 26)
+        grenades = 3;
+    
     
     
 }
@@ -453,9 +406,16 @@ int main()
         draw();
         input();
         logic();
+        
         printw("SCORE: %d | ", score);
+        color(5);
         printw("LIFES LEFT: %d | ", life);
+        color(0);
         printw("ENEMIES SHOT: %d ", enemies);
+        printw("\n");
+        color(4);
+        printw("GRENADES: %d", grenades);
+        color(0);
     }
     getch();
     endwin();
